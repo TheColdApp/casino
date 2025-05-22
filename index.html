@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polished Casino Suite</title>
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 {
+    margin: 0.5em 0;
+    font-weight: 700;
+    text-shadow: 0 0 8px #f0a500;
+  }
+  #balance {
+    font-size: 1.5em;
+    margin-bottom: 0.3em;
+    color: #f0a500;
+    text-shadow: 0 0 8px #f0a500;
+  }
+  main {
+    background: #0f1624dd;
+    padding: 1em;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 95vw;
+    box-shadow: 0 0 20px #f0a500aa;
+  }
+  /* Game selector */
+  #gameSelector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1em;
+    flex-wrap: wrap;
+    gap: 0.6em;
+  }
+  #gameSelector button {
+    background: #0f1624;
+    border: 2px solid #f0a500;
+    color: #f0a500;
+    padding: 0.5em 1em;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  #gameSelector button:hover, #gameSelector button:focus {
+    background: #f0a500;
+    color: #0f1624;
+    outline: none;
+  }
+  #gameSelector button.active {
+    background: #f0a500;
+    color: #0f1624;
+    cursor: default;
+  }
+
+  /* Bet section */
+  #betSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 1em;
+    flex-wrap: wrap;
+  }
+  #betAmount {
+    width: 120px;
+    font-size: 1.1em;
+    padding: 0.3em 0.5em;
+    border-radius: 6px;
+    border: 2px solid #f0a500;
+    background: #16213e;
+    color: #eee;
+    text-align: right;
+  }
+  #betSlider {
+    width: 200px;
+  }
+  #betSlider::-webkit-slider-thumb {
+    background: #f0a500;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  #betSlider::-moz-range-thumb {
+    background: #f0a500;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  #placeBetMsg {
+    color: #f06292;
+    font-weight: 600;
+  }
+
+  /* Games container */
+  .game {
+    display: none;
+    background: #1f2937;
+    padding: 1em;
+    border-radius: 10px;
+    box-shadow: inset 0 0 10px #f0a500aa;
+    min-height: 280px;
+    position: relative;
+  }
+  .game.active {
+    display: block;
+    animation: fadeIn 0.6s ease forwards;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+
+  /* Common button style in games */
+  .game button {
+    margin-top: 1em;
+    background: #f0a500;
+    border: none;
+    padding: 0.5em 1.2em;
+    font-weight: 700;
+    border-radius: 8px;
+    color: #16213e;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .game button:hover, .game button:focus {
+    background: #c67a00;
+    outline: none;
+  }
+
+  /* Result text styling */
+  .result {
+    margin-top: 1em;
+    font-weight: 700;
+    font-size: 1.2em;
+    text-align: center;
+    min-height: 2.2em;
+  }
+
+  /* Roulette styles */
+  #rouletteWheel {
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 6px solid #f0a500;
+    position: relative;
+    box-shadow: 0 0 10px #f0a500cc inset;
+  }
+  .segment {
+    position: absolute;
+    width: 140px;
+    height: 280px;
+    top: 0;
+    left: 140px;
+    transform-origin: left center;
+    border-right: 2px solid #111;
+    text-align: center;
+    line-height: 280px;
+    font-weight: 700;
+    font-size: 1.2em;
+    user-select: none;
+    color: #eee;
+    text-shadow: 0 0 3px #111;
+  }
+  .segment.red {
+    background: #d32f2f;
+  }
+  .segment.black {
+    background: #212121;
+  }
+  .segment.green {
+    background: #388e3c;
+  }
+  #roulettePointer {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 25px solid #f0a500;
+    position: absolute;
+    top: -25px;
+    left: calc(50% - 15px);
+    filter: drop-shadow(0 0 5px #f0a500);
+  }
+  #rouletteResultHistory {
+    margin-top: 0.8em;
+    font-size: 0.9em;
+    color: #ccc;
+    min-height: 1.6em;
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* Slots */
+  #reels {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    font-size: 3.5em;
+    text-shadow: 0 0 5px #f0a500;
+    user-select: none;
+  }
+  #reels div {
+    width: 80px;
+    height: 80px;
+    background: #212121;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 10px #f0a500cc inset;
+    transition: transform 0.3s;
+  }
+  .spin-animate {
+    animation: slotSpin 0.5s ease infinite;
+  }
+  @keyframes slotSpin {
+    0%, 100% {transform: translateY(0);}
+    50% {transform: translateY(-10px);}
+  }
+
+  /* Blackjack & Poker Cards */
+  .cardContainer {
+    display: flex;
+    justify-content: center;
+    gap: 0.6em;
+    margin-top: 1em;
+    flex-wrap: wrap;
+  }
+  .card {
+    background: #eee;
+    color: #222;
+    width: 60px;
+    height: 90px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px #0008;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    padding: 5px 8px;
+    font-weight: 700;
+    font-size: 1.2em;
+    position: relative;
+    opacity: 0;
+    animation: cardDeal 0.5s forwards;
+  }
+  .card.red {
+    color: #d32f2f;
+  }
+  @keyframes cardDeal {
+    to {opacity: 1;}
+  }
+  /* Card suits small */
+  .card .suit-top {
+    font-size: 1.4em;
+  }
+  .card .suit-bottom {
+    font-size: 1.4em;
+    transform: rotate(180deg);
+    align-self: flex-end;
+  }
+
+  /* Craps dice */
+  #crapsDice {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    font-size: 6em;
+    margin-top: 1em;
+    user-select: none;
+  }
+  .dice-roll {
+    animation: diceRollAnim 0.8s ease forwards;
+  }
+  @keyframes diceRollAnim {
+    0% {transform: rotate(0);}
+    25% {transform: rotate(90deg);}
+    50% {transform: rotate(180deg);}
+    75% {transform: rotate(270deg);}
+    100% {transform: rotate(360deg);}
+  }
+
+  /* Baccarat cards */
+  #baccaratCards {
+    display: flex;
+    justify-content: center;
+    gap: 2em;
+    font-size: 4em;
+    margin-top: 1em;
+    user-select: none;
+  }
+  .animate-in {
+    animation: fadeInCard 0.6s ease forwards;
+  }
+  @keyframes fadeInCard {
+    from {opacity: 0; transform: scale(0.6);}
+    to {opacity: 1; transform: scale(1);}
+  }
+
+  /* Popup for winnings */
+  #popupWin {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f0a500;
+    color: #16213e;
+    padding: 0.6em 1.2em;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.3em;
+    box-shadow: 0 0 15px #f0a500cc;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 999;
+  }
+  #popupWin.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Leaderboard */
+  #leaderboard {
+    margin-top: 1.5em;
+    border-top: 1px solid #f0a500aa;
+    padding-top: 1em;
+  }
+  #leaderboard h2 {
+    text-align: center;
+    margin-bottom: 0.4em;
+    font-weight: 700;
+  }
+  #leaderboard ol {
+    list-style-position: inside;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 0;
+    color: #f0a500;
+    font-weight: 600;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dotted #f0a500;
+  }
+  .tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    background: #f0a500;
+    color: #16213e;
+    padding: 0.3em 0.6em;
+    border-radius: 6px;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-weight: 700;
+    z-index: 1000;
+    margin-top: 0.3em;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    #reels {
+      font-size: 2.5em;
+    }
+    #crapsDice {
+      font-size: 4em;
+    }
+    .card {
+      width: 45px;
+      height: 70px;
+      font-size: 1em;
+    }
+    #baccaratCards {
+      font-size: 3em;
+      gap: 1.2em;
+    }
+    #betSection {
+      flex-direction: column;
+      gap: 0.5em;
+    }
+  }
+</style>
+</head>
+<body>
+<h1>🎲 Polished Casino Suite 🎰</h1>
+<div id="balance" aria-live="polite" aria-atomic="true">Balance: $1000</div>
+
+<div id="gameSelector" role="tablist" aria-label="Select casino game">
+  <button role="tab" id="tab-slots" class="active" aria-selected="true" aria-controls="slots" tabindex="0">Slots</button>
+  <button role="tab" id="tab-roulette" aria-selected="false" aria-controls="roulette" tabindex="-1">Roulette</button>
+  <button role="tab" id="tab-blackjack" aria-selected="false" aria-controls="blackjack" tabindex="-1">Blackjack</button>
+  <button role="tab" id="tab-poker" aria-selected="false" aria-controls="poker" tabindex="-1">Poker</button>
+  <button role="tab" id="tab-craps" aria-selected="false" aria-controls="craps" tabindex="-1">Craps</button>
+  <button role="tab" id="tab-baccarat" aria-selected="false" aria-controls="baccarat" tabindex="-1">Baccarat</button>
+</div>
+
+<div id="betSection" aria-label="Bet controls">
+  <label for="betSlider" class="tooltip" data-tip="Slide to set your bet amount">$ Bet:</label>
+  <input type="range" id="betSlider" min="1" max="500" value="10" />
+  <input type="number" id="betAmount" min="1" max="500" value="10" aria-label="Bet amount input" />
+  <span id="placeBetMsg" role="alert" aria-live="assertive"></span>
+</div>
+
+<main>
+  <!-- Slots -->
+  <section id="slots" class="game active" role="tabpanel" aria-labelledby="tab-slots">
+    <div id="reels" aria-label="Slot machine reels">
+      <div>🍒</div><div>🍋</div><div>🍊</div>
+    </div>
+    <button id="spinSlotsBtn">Spin Slots</button>
+    <div id="slotsResult" class="result" aria-live="polite"></div>
+  </section>
+
+  <!-- Roulette -->
+  <section id="roulette" class="game" role="tabpanel" aria-labelledby="tab-roulette">
+    <div id="rouletteWheel" aria-label="Roulette wheel" role="img" aria-live="polite"></div>
+    <div id="roulettePointer" aria-hidden="true"></div>
+    <select id="rouletteBetType" aria-label="Select bet type">
+      <option value="red">Red</option>
+      <option value="black">Black</option>
+      <option value="even">Even</option>
+      <option value="odd">Odd</option>
+    </select>
+    <button id="spinRouletteBtn">Spin Roulette</button>
+    <div id="rouletteResult" class="result" aria-live="polite"></div>
+    <div id="rouletteResultHistory"></div>
+  </section>
+
+  <!-- Blackjack -->
+  <section id="blackjack" class="game" role="tabpanel" aria-labelledby="tab-blackjack">
+    <div>
+      <strong>Dealer:</strong>
+      <div id="dealerCards" class="cardContainer" aria-live="polite"></div>
+    </div>
+    <div>
+      <strong>You:</strong>
+      <div id="playerCards" class="cardContainer" aria-live="polite"></div>
+    </div>
+    <button id="blackjackHitBtn">Hit</button>
+    <button id="blackjackStandBtn">Stand</button>
+    <button id="blackjackNewGameBtn" style="display:none;">New Game</button>
+    <div id="blackjackResult" class="result" aria-live="polite"></div>
+  </section>
+
+  <!-- Poker -->
+  <section id="poker" class="game" role="tabpanel" aria-labelledby="tab-poker">
+    <button id="dealPokerBtn">Deal Poker Hand</button>
+    <div id="pokerHand" class="cardContainer" aria-live="polite"></div>
+    <div id="pokerResult" class="result" aria-live="polite"></div>
+  </section>
+
+  <!-- Craps -->
+  <section id="craps" class="game" role="tabpanel" aria-labelledby="tab-craps">
+    <div id="crapsDice" aria-live="polite">
+      <div id="dice1">⚀</div>
+      <div id="dice2">⚀</div>
+    </div>
+    <button id="playCrapsBtn">Roll Dice</button>
+    <div id="crapsResult" class="result" aria-live="polite"></div>
+  </section>
+
+  <!-- Baccarat -->
+  <section id="baccarat" class="game" role="tabpanel" aria-labelledby="tab-baccarat">
+    <label for="baccaratBet" class="tooltip" data-tip="Bet on player, banker, or tie">Bet On:</label>
+    <select id="baccaratBet" aria-label="Select baccarat bet">
+      <option value="player">Player</option>
+      <option value="banker">Banker</option>
+      <option value="tie">Tie</option>
+    </select>
+    <div id="baccaratCards" aria-live="polite">
+      <div id="baccaratPlayerCard">🂠</div>
+      <div id="baccaratBankerCard">🂠</div>
+    </div>
+    <button id="playBaccaratBtn">Play Baccarat</button>
+    <div id="baccaratResult" class="result" aria-live="polite"></div>
+  </section>
+
+  <!-- Leaderboard -->
+  <section id="leaderboard" aria-label="Leaderboard">
+    <h2>Leaderboard</h2>
+    <ol id="leaderboardList"></ol>
+  </section>
+</main>
+
+<div id="popupWin" role="alert" aria-live="assertive"></div>
+
+<script>
+(() => {
+  // Utilities
+  const suits = ['♠', '♥', '♦', '♣'];
+  const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+  const cardValues = {
+    '2': 2, '3': 3, '4': 4, '5': 5,
+    '6': 6, '7': 7, '8': 8, '9': 9,
+    '10': 10, 'J': 10, 'Q': 10, 'K': 10, 'A': 11,
+  };
+  const slotSymbols = ['🍒','🍋','🍊','🍉','🍇','⭐','💎','7️⃣'];
+  const rouletteNumbers = [
+    {num: 0, color: 'green'},
+    {num: 32, color: 'red'}, {num: 15, color: 'black'},
+    {num: 19, color: 'red'}, {num: 4, color: 'black'},
+    {num: 21, color: 'red'}, {num: 2, color: 'black'},
+    {num: 25, color: 'red'}, {num: 17, color: 'black'},
+    {num: 34, color: 'red'}, {num: 6, color: 'black'},
+    {num: 27, color: 'red'}, {num: 13, color: 'black'},
+    {num: 36, color: 'red'}, {num: 11, color: 'black'},
+    {num: 30, color: 'red'}, {num: 8, color: 'black'},
+    {num: 23, color: 'red'}, {num: 10, color: 'black'},
+    {num: 5, color: 'red'}, {num: 24, color: 'black'},
+    {num: 16, color: 'red'}, {num: 33, color: 'black'},
+    {num: 1, color: 'red'}, {num: 20, color: 'black'},
+    {num: 14, color: 'red'}, {num: 31, color: 'black'},
+    {num: 9, color: 'red'}, {num: 22, color: 'black'},
+    {num: 18, color: 'red'}, {num: 29, color: 'black'},
+    {num: 7, color: 'red'}, {num: 28, color: 'black'}
+  ];
+
+  // State
+  let balance = 1000;
+  let maxBalance = balance;
+  let bet = 10;
+  const leaderboardKey = 'casinoLeaderboard';
+  let leaderboard = [];
+
+  // DOM refs
+  const balanceEl = document.getElementById('balance');
+  const betSlider = document.getElementById('betSlider');
+  const betAmountInput = document.getElementById('betAmount');
+  const placeBetMsg = document.getElementById('placeBetMsg');
+  const popupWin = document.getElementById('popupWin');
+
+  // Tabs & games
+  const gameButtons = document.querySelectorAll('#gameSelector button');
+  const games = document.querySelectorAll('.game');
+
+  // --- Balance functions ---
+  function loadBalance() {
+    const stored = localStorage.getItem('casinoBalance');
+    if(stored !== null && !isNaN(stored)) {
+      balance = parseInt(stored, 10);
+      maxBalance = Math.max(maxBalance, balance);
+    }
+  }
+  function saveBalance() {
+    localStorage.setItem('casinoBalance', balance);
+    if (balance > maxBalance) {
+      maxBalance = balance;
+      saveLeaderboard();
+    }
+    updateBalanceUI();
+  }
+  function updateBalanceUI() {
+    balanceEl.textContent = `Balance: $${balance}`;
+  }
+
+  // --- Leaderboard ---
+  function loadLeaderboard() {
+    const stored = localStorage.getItem(leaderboardKey);
+    if(stored) {
+      try {
+        leaderboard = JSON.parse(stored);
+      } catch(e) {
+        leaderboard = [];
+      }
+    }
+    renderLeaderboard();
+  }
+  function saveLeaderboard() {
+    // Keep only top 5
+    leaderboard.push(balance);
+    leaderboard = [...new Set(leaderboard)].sort((a,b) => b-a).slice(0,5);
+    localStorage.setItem(leaderboardKey, JSON.stringify(leaderboard));
+    renderLeaderboard();
+  }
+  function renderLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+    list.innerHTML = leaderboard.length
+      ? leaderboard.map((b,i) => `<li>${i+1}. $${b}</li>`).join('')
+      : '<li>No scores yet</li>';
+  }
+
+  // --- Popup ---
+  let popupTimeout = null;
+  function showPopup(message) {
+    popupWin.textContent = message;
+    popupWin.classList.add('show');
+    if(popupTimeout) clearTimeout(popupTimeout);
+    popupTimeout = setTimeout(() => {
+      popupWin.classList.remove('show');
+    }, 2500);
+  }
+
+  // --- Bet Controls ---
+  function syncBet(value) {
+    value = Math.min(Math.max(1, Math.floor(value)), balance);
+    bet = value;
+    betAmountInput.value = bet;
+    betSlider.value = bet;
+    placeBetMsg.textContent = '';
+  }
+  betSlider.addEventListener('input', e => {
+    syncBet(e.target.value);
+  });
+  betAmountInput.addEventListener('input', e => {
+    syncBet(e.target.value);
+  });
+
+  // --- Game Switcher ---
+  function switchGame(id) {
+    games.forEach(g => {
+      if (g.id === id) g.classList.add('active');
+      else g.classList.remove('active');
+    });
+    gameButtons.forEach(btn => {
+      if (btn.getAttribute('aria-controls') === id) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        btn.tabIndex = 0;
+        btn.focus();
+      } else {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+        btn.tabIndex = -1;
+      }
+    });
+    clearResults();
+  }
+  gameButtons.forEach(btn => {
+    btn.addEventListener('click', () => switchGame(btn.getAttribute('aria-controls')));
+  });
+
+  // --- Clear results ---
+  function clearResults() {
+    document.querySelectorAll('.result').forEach(el => el.textContent = '');
+  }
+
+  // --- Slots ---
+  const reels = document.querySelectorAll('#reels div');
+  const spinSlotsBtn = document.getElementById('spinSlotsBtn');
+  const slotsResult = document.getElementById('slotsResult');
+  let spinning = false;
+
+  spinSlotsBtn.addEventListener('click', () => {
+    if(spinning) return;
+    if(bet > balance) {
+      placeBetMsg.textContent = 'Insufficient balance!';
+      return;
+    }
+    spinning = true;
+    placeBetMsg.textContent = '';
+    balance -= bet;
+    updateBalanceUI();
+
+    // Spin animation
+    reels.forEach(r => r.classList.add('spin-animate'));
+    setTimeout(() => {
+      reels.forEach(r => r.classList.remove('spin-animate'));
+      // Determine random symbols
+      let results = [];
+      for(let i=0; i<reels.length; i++) {
+        const sym = slotSymbols[Math.floor(Math.random()*slotSymbols.length)];
+        reels[i].textContent = sym;
+        results.push(sym);
+      }
+      // Simple win logic: 3 match big win, 2 match smaller win
+      let counts = {};
+      results.forEach(s => counts[s] = (counts[s]||0)+1);
+      let maxCount = Math.max(...Object.values(counts));
+      let winAmount = 0;
+      if(maxCount === 3) {
+        winAmount = bet * 10;
+        slotsResult.textContent = `🎉 Triple match! You won $${winAmount}!`;
+      } else if(maxCount === 2) {
+        winAmount = bet * 2;
+        slotsResult.textContent = `Nice! Double match! You won $${winAmount}.`;
+      } else {
+        slotsResult.textContent = `No match, you lost $${bet}. Try again!`;
+      }
+      balance += winAmount;
+      saveBalance();
+      if(winAmount > 0) showPopup(`+ $${winAmount}`);
+      spinning = false;
+    }, 2000);
+  });
+
+  // --- Roulette ---
+  const rouletteWheel = document.getElementById('rouletteWheel');
+  const spinRouletteBtn = document.getElementById('spinRouletteBtn');
+  const rouletteResult = document.getElementById('rouletteResult');
+  const rouletteResultHistory = document.getElementById('rouletteResultHistory');
+  const rouletteBetType = document.getElementById('rouletteBetType');
+
+  // Draw roulette wheel segments
+  function drawRouletteWheel() {
+    rouletteWheel.innerHTML = '';
+    const segmentCount = rouletteNumbers.length;
+    const angleStep = 360 / segmentCount;
+    rouletteNumbers.forEach((item, i) => {
+      const seg = document.createElement('div');
+      seg.className = `segment ${item.color}`;
+      seg.style.transform = `rotate(${i * angleStep}deg) skewY(-${90 - angleStep}deg)`;
+      seg.textContent = item.num;
+      rouletteWheel.appendChild(seg);
+    });
+  }
+  drawRouletteWheel();
+
+  function spinRoulette() {
+    if(bet > balance) {
+      placeBetMsg.textContent = 'Insufficient balance!';
+      return;
+    }
+    placeBetMsg.textContent = '';
+    balance -= bet;
+    updateBalanceUI();
+    rouletteResult.textContent = '';
+    spinRouletteBtn.disabled = true;
+
+    // Spin animation by rotating wheel randomly 3-6 times + offset
+    const spins = 3 + Math.floor(Math.random() * 4);
+    const segmentCount = rouletteNumbers.length;
+    const finalIndex = Math.floor(Math.random() * segmentCount);
+    const anglePerSegment = 360 / segmentCount;
+    const finalAngle = spins * 360 + finalIndex * anglePerSegment + anglePerSegment/2;
+
+    rouletteWheel.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+    rouletteWheel.style.transform = `rotate(${finalAngle}deg)`;
+
+    setTimeout(() => {
+      spinRouletteBtn.disabled = false;
+      // Result
+      const landed = rouletteNumbers[finalIndex];
+      let winAmount = 0;
+      let msg = `Number: ${landed.num} (${landed.color})`;
+
+      // Determine if player won
+      const betType = rouletteBetType.value;
+      if(landed.num === 0) {
+        if(betType === 'red' || betType === 'black') {
+          winAmount = 0; // Zero is neither red nor black
+          msg += ' - House wins.';
+        } else if(betType === 'zero') {
+          winAmount = bet * 35;
+          msg += ' - Jackpot! You won big!';
+        } else if(betType === 'number' && parseInt(rouletteBetType.dataset.number) === landed.num) {
+          winAmount = bet * 35;
+          msg += ' - Jackpot! You won big!';
+        }
+      } else {
+        if(betType === landed.color) {
+          winAmount = bet * 2;
+          msg += ' - You won on color!';
+        } else if(betType === 'number' && parseInt(rouletteBetType.dataset.number) === landed.num) {
+          winAmount = bet * 35;
+          msg += ' - Jackpot! You won big!';
+        }
+      }
+
+      balance += winAmount;
+      saveBalance();
+      rouletteResult.textContent = msg;
+      rouletteResultHistory.textContent = `Last number: ${landed.num} (${landed.color})`;
+      if(winAmount > 0) showPopup(`+ $${winAmount}`);
+    }, 4100);
+  }
+
+  spinRouletteBtn.addEventListener('click', spinRoulette);
+
+  // --- Roulette number input for 'number' bet type ---
+  const rouletteNumberInput = document.getElementById('rouletteNumberInput');
+  rouletteBetType.addEventListener('change', e => {
+    if(rouletteBetType.value === 'number') {
+      rouletteNumberInput.style.display = 'inline-block';
+    } else {
+      rouletteNumberInput.style.display = 'none';
+    }
+  });
+  rouletteNumberInput.addEventListener('input', e => {
+    const val = parseInt(e.target.value);
+    if(!isNaN(val) && val >= 0 && val <= 36) {
+      rouletteBetType.dataset.number = val;
+    } else {
+      rouletteBetType.dataset.number = '';
+    }
+  });
+
+  // --- Blackjack ---
+  const blackjackCardsEl = document.getElementById('blackjackCards');
+  const blackjackResult = document.getElementById('blackjackResult');
+  const hitBtn = document.getElementById('hitBtn');
+  const standBtn = document.getElementById('standBtn');
+  const dealBtn = document.getElementById('dealBtn');
+
+  let deck = [];
+  let playerHand = [];
+  let dealerHand = [];
+  let blackjackInPlay = false;
+
+  function createDeck() {
+    deck = [];
+    for(const suit of suits) {
+      for(const rank of ranks) {
+        deck.push({suit, rank, value: cardValues[rank]});
+      }
+    }
+    // Shuffle
+    for(let i=deck.length-1; i>0; i--) {
+      const j = Math.floor(Math.random() * (i+1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+  }
+
+  function handValue(hand) {
+    let value = 0;
+    let aces = 0;
+    for(const card of hand) {
+      value += card.value;
+      if(card.rank === 'A') aces++;
+    }
+    // Adjust for Aces
+    while(value > 21 && aces > 0) {
+      value -= 10;
+      aces--;
+    }
+    return value;
+  }
+
+  function renderHand(hand) {
+    return hand.map(c => `${c.rank}${c.suit}`).join(' ');
+  }
+
+  function startBlackjack() {
+    if(blackjackInPlay) return;
+    if(bet > balance) {
+      placeBetMsg.textContent = 'Insufficient balance!';
+      return;
+    }
+    blackjackInPlay = true;
+    placeBetMsg.textContent = '';
+    balance -= bet;
+    updateBalanceUI();
+    createDeck();
+    playerHand = [deck.pop(), deck.pop()];
+    dealerHand = [deck.pop(), deck.pop()];
+    blackjackResult.textContent = '';
+    renderHands();
+    updateButtons(true);
+  }
+
+  function renderHands() {
+    blackjackCardsEl.textContent = `Player: ${renderHand(playerHand)} (Value: ${handValue(playerHand)})\nDealer: ${dealerHand[0].rank}${dealerHand[0].suit} ??`;
+  }
+
+  function updateButtons(inPlay) {
+    hitBtn.disabled = !inPlay;
+    standBtn.disabled = !inPlay;
+    dealBtn.disabled = inPlay;
+  }
+
+  function hit() {
+    if(!blackjackInPlay) return;
+    playerHand.push(deck.pop());
+    renderHands();
+    const val = handValue(playerHand);
+    if(val > 21) {
+      blackjackResult.textContent = `Bust! You lost $${bet}.`;
+      blackjackInPlay = false;
+      updateButtons(false);
+      saveBalance();
+    }
+  }
+
+  function stand() {
+    if(!blackjackInPlay) return;
+    // Dealer plays
+    while(handValue(dealerHand) < 17) {
+      dealerHand.push(deck.pop());
+    }
+    const playerVal = handValue(playerHand);
+    const dealerVal = handValue(dealerHand);
+    let msg = '';
+    if(dealerVal > 21 || playerVal > dealerVal) {
+      const winAmount = bet * 2;
+      balance += winAmount;
+      msg = `You win! You earned $${winAmount}.`;
+    } else if(playerVal === dealerVal) {
+      balance += bet;
+      msg = `Push. Your bet is returned.`;
+    } else {
+      msg = `You lost $${bet}.`;
+    }
+    blackjackResult.textContent = msg + `\nDealer: ${renderHand(dealerHand)} (Value: ${dealerVal})`;
+    blackjackInPlay = false;
+    updateButtons(false);
+    saveBalance();
+    if(msg.startsWith('You win')) showPopup(`+ $${bet*2}`);
+  }
+
+  dealBtn.addEventListener('click', startBlackjack);
+  hitBtn.addEventListener('click', hit);
+  standBtn.addEventListener('click', stand);
+
+  // --- Init ---
+  loadBalance();
+  updateBalanceUI();
+  loadLeaderboard();
+  switchGame('slots');
+})();
+</script>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #121212;
+    color: #eee;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  main {
+    max-width: 600px;
+    width: 100%;
+    margin: 20px;
+    background: #222;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  #balance {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  #betControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  #betAmount {
+    width: 60px;
+    font-size: 1em;
+    padding: 5px;
+    border-radius: 4px;
+    border: none;
+    text-align: center;
+  }
+  #betSlider {
+    width: 200px;
+  }
+  #placeBetMsg {
+    color: #ff5555;
+    text-align: center;
+    margin-top: 10px;
+    height: 1.2em;
+  }
+  #gameSelector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  #gameSelector button {
+    background: #444;
+    color: #eee;
+    border: none;
+    padding: 8px 12px;
+    margin: 0 5px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #gameSelector button.active, #gameSelector button:hover {
+    background: #666;
+  }
+  .game {
+    display: none;
+    text-align: center;
+  }
+  .game.active {
+    display: block;
+  }
+  #popupWin {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #0f0;
+    color: #000;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+  }
+  #popupWin.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* Slots */
+  #reels {
+    display: flex;
+    justify-content: center;
+    font-size: 3em;
+    margin-bottom: 10px;
+  }
+  #slotsResult {
+    margin-top: 10px;
+    min-height: 1.4em;
+  }
+  .spin-animate {
+    animation: spin 0.5s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0); }
+  }
+  /* Roulette */
+  #rouletteWheel {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    border: 3px solid #888;
+    overflow: hidden;
+    user-select: none;
+  }
+  #rouletteWheel .segment {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0% 0%;
+    text-align: right;
+    padding-right: 10px;
+    font-size: 0.9em;
+    line-height: 1.3em;
+    font-weight: bold;
+    color: white;
+    pointer-events: none;
+  }
+  .red {
+    background: #d33;
+  }
+  .black {
+    background: #222;
+  }
+  .green {
+    background: #2a2;
+  }
+  #rouletteResult {
+    margin-top: 10px;
+    min-height: 1.4em;
+  }
+  #rouletteResultHistory {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: #aaa;
+  }
+  #rouletteBetType {
+    margin-top: 10px;
+    font-size: 1em;
+  }
+  #rouletteNumberInput {
+    width: 40px;
+    margin-left: 5px;
+    font-size: 1em;
+    padding: 2px 5px;
+    display: none;
+  }
+  /* Blackjack */
+  #blackjackCards {
+    white-space: pre-line;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
+  #blackjackResult {
+    min-height: 1.4em;
+    margin-bottom: 10px;
+  }
+  #blackjackButtons button {
+    margin: 0 5px;
+    padding: 8px 12px;
+    font-size: 1em;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+  }
+  #blackjackButtons button:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+</style>
+
+<header>
+  <h1>🎰 Mini Casino</h1>
+  <div id="balance" aria-live="polite" aria-atomic="true">Balance: $1000</div>
+</header>
+
+<main>
+  <div id="betControls">
+    <label for="betAmount">Bet Amount: $</label>
+    <input type="number" id="betAmount" min="1" max="1000" value="10" aria-label="Bet amount">
+    <input type="range" id="betSlider" min="1" max="1000" value="10" aria-label="Bet slider">
+  </div>
+  <div id="placeBetMsg" role="alert" aria-live="assertive"></div>
+
+  <nav id="gameSelector" role="tablist" aria-label="Select game">
+    <button role="tab" aria-controls="slots" aria-selected="true" tabindex="0">Slots</button>
+    <button role="tab" aria-controls="roulette" aria-selected="false" tabindex="-1">Roulette</button>
+    <button role="tab" aria-controls="blackjack" aria-selected="false" tabindex="-1">Blackjack</button>
+  </nav>
+
+  <section id="slots" class="game active" role="tabpanel" tabindex="0" aria-labelledby="slots-tab">
+    <div id="reels" aria-live="polite" aria-atomic="true" aria-relevant="all">
+      <div>🍒</div><div>🍋</div><div>🍊</div>
+    </div>
+    <button id="spinSlotsBtn" aria-label="Spin slots">Spin Slots</button>
+    <div id="slotsResult" role="alert" aria-live="assertive"></div>
+  </section>
+
+  <section id="roulette" class="game" role="tabpanel" tabindex="0" aria-labelledby="roulette-tab">
+    <div id="rouletteWheel" aria-live="polite" aria-atomic="true" aria-relevant="all"></div>
+    <select id="rouletteBetType" aria-label="Choose bet type">
+      <option value="red">Red</option>
+      <option value="black">Black</option>
+      <option value="zero">Zero</option>
+      <option value="number">Number</option>
+    </select>
+    <input type="number" id="rouletteNumberInput" min="0" max="36" aria-label="Number input for bet" />
+    <button id="spinRouletteBtn" aria-label="Spin roulette">Spin Roulette</button>
+    <div id="rouletteResult" role="alert" aria-live="assertive"></div>
+    <div id="rouletteResultHistory"></div>
+  </section>
+
+  <section id="blackjack" class="game" role="tabpanel" tabindex="0" aria-labelledby="blackjack-tab">
+    <pre id="blackjackCards" aria-live="polite" aria-atomic="true"></pre>
+    <div id="blackjackResult" role="alert" aria-live="assertive"></div>
+    <div id="blackjackButtons">
+      <button id="dealBtn" aria-label="Deal cards">Deal</button>
+      <button id="hitBtn" aria-label="Hit" disabled>Hit</button>
+      <button id="standBtn" aria-label="Stand" disabled>Stand</button>
+    </div>
+  </section>
+
+  <section aria-label="Leaderboard">
+    <h2>Leaderboard</h2>
+    <ol id="leaderboardList"></ol>
+  </section>
+</main>
+
+<div id="popupWin" role="alert" aria-live="assertive"></div>
